@@ -1,3 +1,5 @@
+package gairon.k04.k02
+object Main{
 // Pair of Symbols
 case class SymbolPair(s1:Symbol, s2:Symbol)
 
@@ -15,4 +17,5 @@ def checkColor:
 				else 'NothingCorrect
 		}
 	}
+}
 }
