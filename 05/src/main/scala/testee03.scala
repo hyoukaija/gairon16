@@ -1,3 +1,5 @@
+package gairon.k09.k01
+object Main{
 
 
 def flatten[X]:(List[List[X]])=>List[X]
@@ -12,4 +14,5 @@ def flatten[X]:(List[List[X]])=>List[X]
 						}}
 		thing(e)
 		}
+}
 }
