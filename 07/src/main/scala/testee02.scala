@@ -1,3 +1,5 @@
+package gairon.k11.k03
+object Main{
 def head[X]:(List[X])=>X
 =(lst)=>
 {
@@ -123,3 +125,4 @@ def solve:List[List[Double]]=>List[Double]
 
 
 
+}
