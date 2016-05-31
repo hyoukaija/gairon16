@@ -1,25 +1,27 @@
 package gairon.k14.k01
 object Main{
-case class State(person:Int,monster:Int,boat:Int,shore:Boolean)
-case class Load(person:Int,monster:Int)
+case class State(person:Int,monster:Int,boat:Int)
+case class Load(person:Int,monster:Int,direction:Boolean)
 abstract class Option[+X]
 case class Some[+X](x:X) extends Option[X]
 case object None extends Option[Nothing]
 
-def makeState:(Int)=>(Boolean)=>(Int)=>State
+def makeState:(Int)=>(Int)=>State
 =
-(n)=>(shore)=>(boat)=>{State(n,n,boat,shore)}
+(n)=>(boat)=>{State(n,n,boat)}
 
-def next:State=>List[(Load,State)]
+def next:(Boolean)=>(State,State)=>List[(Load,State,State)]
 =
-(sta)=>{
-	sta match{
-		case State(p,m,b,s)=>{def change:(Int)=>(Int)=>List[(Load,State)]
-		=(i)=>(j)=>{
-				if(i+j<= b && p-i>0 && m-j>0) (Load(i,j),State(p-i,m-j,b,s))::change(i)(j+1)
-				else if(i<= b)	change(i+1)(0)	
+(boolean)=>(sta1,sta2)=>{
+	(sta1,sta2) match{
+		case (State(p1,m1,b1),State(p2,m2,b2))=>{
+		def change:(Int)=>(Int)=>List[(Load,State,State)]
+			=(i)=>(j)=>{
+				if(i+j<= b1 && p1-i>=0 && m1-j>=0) {if(boolean){(Load(i,j,boolean),State(p1-i,m1-j,b1),State(p2+i,m2+j,b2))::change(i)(j+1)}
+						else (Load(i,j,boolean),State(p1+i,m1+j,b1),State(p2-i,m2-j,b2))::change(i)(j+1)}
+				else if(i<= b1)	change(i+1)(0)	
 				else Nil
-		}
+			}
 		change(0)(1)
 	}
 	}
@@ -28,7 +30,7 @@ def next:State=>List[(Load,State)]
 def isLeagal:State=>Boolean
 =
 (sta)=>{sta match{
-	case State(p,m,b,s)=>if(p < m) false else true
+	case State(p,m,b)=>if(p < m && p!=0) false else true
 	}
 }
 
@@ -36,7 +38,7 @@ def isFinal:State=>Boolean
 =
 (sta)=>{
 	sta match{
-		case State(p,m,b,s)=>if(p==0 && m==0) true else false
+		case State(p,m,b)=>if(p==0 && m==0) true else false
 	}
 }
 
@@ -51,49 +53,57 @@ def reverse[X]:List[X]=>List[X]
 	}
 	revsub(Nil)
 }
-def solve:(Int)=>(Int)=>Option[List[Load]]
+def solve:(Int)=>(Int)=>/*List[(Load,State,State)]*/Option[List[Load]]
 =
 (n)=>(boat)=>
 {
-	def sta = makeState(n)(false)(boat)
+	def sta1 = makeState(n)(boat)
+	def sta2 = makeState(0)(boat)
 
-	def nextfloor:List[(Load,State)]=>List[(Load,State)]
+	def nextfloor:List[(Load,State,State)]=>List[(Load,State,State)]
 		=(lstLS)=>{
 			lstLS match{
 				case Nil=>Nil
-				case (l,s)::rst=>if(isLeagal(s)) (l,s)::nextfloor(rst) else nextfloor(rst)
+				case (l,s1,s2)::rst=>if(isLeagal(s1)&&isLeagal(s2)) (l,s1,s2)::nextfloor(rst) else nextfloor(rst)
 			}
 		}
 
-	def circulation:Option[List[Load]]=>List[(Load,State)]=>Option[List[Load]]
-		=(op)=>(lst)=>{
-			lst match{
-				case Nil=>None
-				case (Load(x,y),State(p,m,b,s))::rst=>op match{
-							case None=>if(p==0 && m==0) Some(Load(x,y)::Nil) else circulation(Some(Load(x,y)::Nil))(nextfloor(next(State(p,m,b,s))))
-							case Some(lstl)=>if(p==0 && m==0) op else if(nextfloor(next(State(p,m,b,s)))==Nil) circulation(op)(rst)
-							else circulation(Some(Load(x,y)::lstl))(nextfloor(next(State(p,m,b,s))))
-			}
-		}
+
+	//nextfloor(next(true)(sta1,sta2))
+	
+	def oneLine:Option[List[Load]]=>(Boolean)=>List[(Load,State,State)]=>List[(Load,State,State)]=>Option[List[Load]]
+		=(op)=>(boolean)=>(lstOn)=>(lstDown)=>{
+			lstDown match{
+				case Nil=>lstOn match{
+					case Nil=>None
+					case (l,s1,s2)::rst=>oneLine(op)(boolean)(rst)(nextfloor(next(!boolean)(s1,s2)))
+				}
+				case (l,s1,s2)::rst=>if(isFinal(s1)) 
+				{op match{
+						case None=>Some(l::Nil)
+						case Some(lstl)=>Some(l::lstl)
+					}
+				}else {
+					op match{
+						case None=>oneLine(Some(l::Nil))(!boolean)(lstDown)(nextfloor(next(!boolean)(s1,s2)))
+						case Some(lstl)=>oneLine(Some(l::lstl))(!boolean)(lstDown)(nextfloor(next(!boolean)(s1,s2)))
+					}
+				}
 	}
-	def cir=circulation(None)(nextfloor(next(sta)))
+}
+	def cir=oneLine(None)(true)((Load(0,0,false),sta1,sta2)::Nil)(nextfloor(next(true)(sta1,sta2)))
 
 	def Last:Option[List[Load]]=>Option[List[Load]]
 		=(lst)=>{lst match{
 				case None=>None
-				case Some(lstL)=>Some(reverse(lstL))
+				case Some(lstL)=>Some(reverse(lstL).tail)
 			}
 		}
 	Last(cir)
-
-/*
-	def move:(Option[List[Load]])=>List[Load,State]=>Option[List[Load]]
-		=(lst)=>(lstLS)=>{
-			if(isLeagal(sta1) && isLeagal(sta2)) (sta1,sta2) match{
-				case (State(p1,m1,b1,s1),State(p2,n2,b2,s2))=>
-			}else None
-			}
-		}
-*/	
+	
 }
+
+
+
+
 }
